@@ -1,111 +1,661 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WHOOP Dashboard</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d0d0d; color: #fff; min-height: 100vh; padding: 2rem; }
-    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 2rem; color: #00f19f; letter-spacing: -0.5px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
-    .card { background: #1a1a1a; border-radius: 12px; padding: 1.4rem; border: 1px solid #2a2a2a; }
-    .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 0.5rem; }
-    .card-value { font-size: 2.2rem; font-weight: 700; color: #fff; }
-    .card-value.green { color: #00f19f; }
-    .card-value.yellow { color: #f5a623; }
-    .card-value.red { color: #ff4d4d; }
-    .card-sub { font-size: 0.8rem; color: #666; margin-top: 0.3rem; }
-    .section-title { font-size: 1rem; font-weight: 600; color: #aaa; margin: 1.5rem 0 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-    .loading { color: #555; font-size: 0.9rem; }
-    .error { color: #ff4d4d; font-size: 0.9rem; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WHOOP Dashboard — Prasad Sawant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --bg4: #222222;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #999;
+    --text3: #555;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --yellow: #EF9F27;
+    --red: #E24B4A;
+    --purple: #7F77DD;
+    --blue: #378ADD;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #E1F5EE; flex-shrink: 0; }
+  .user-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .user-date { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .status-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); background: var(--bg3); border: 0.5px solid var(--border); border-radius: 20px; padding: 4px 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .btn { font-size: 12px; padding: 6px 14px; border: 0.5px solid var(--border2); border-radius: 8px; background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn:hover { background: var(--bg3); color: var(--text); }
+
+  /* Tabs */
+  .tab-row { display: flex; gap: 2px; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+  .tab { font-size: 13px; padding: 8px 16px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -0.5px; transition: all 0.15s; letter-spacing: 0.01em; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--text); border-bottom-color: var(--green); font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Section */
+  .section { margin-bottom: 2rem; }
+  .section-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; font-weight: 500; }
+
+  /* Metric grid */
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Metric card */
+  .metric-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all 0.15s; }
+  .metric-card:hover { background: var(--bg3); border-color: var(--border2); }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .metric-label i { font-size: 13px; }
+  .metric-value { font-size: 28px; font-weight: 500; color: var(--text); line-height: 1; }
+  .metric-unit { font-size: 13px; font-weight: 400; color: var(--text3); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
+  .score-bar { height: 3px; border-radius: 2px; background: var(--bg4); margin-top: 10px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+  /* Explain panel */
+  .explain-panel { background: var(--bg3); border-radius: var(--radius); padding: 1rem 1.25rem; margin-top: 10px; border-left: 2px solid var(--green); display: none; animation: fadeIn 0.2s ease; }
+  .explain-panel.open { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .explain-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .explain-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .explain-body strong { color: var(--text); font-weight: 500; }
+  .explain-tip { font-size: 12px; color: var(--green); margin-top: 10px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.5; }
+
+  /* Tags */
+  .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; margin-top: 4px; }
+  .tag-green { background: rgba(29,158,117,0.15); color: #1D9E75; }
+  .tag-yellow { background: rgba(239,159,39,0.15); color: #EF9F27; }
+  .tag-red { background: rgba(226,75,74,0.15); color: #E24B4A; }
+
+  /* Card */
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+
+  /* Sleep stages */
+  .sleep-stage { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .sleep-stage:last-child { border-bottom: none; }
+  .sleep-bar-wrap { flex: 1; height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .stage-label { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; }
+  .stage-dur { font-size: 12px; color: var(--text); width: 50px; text-align: right; flex-shrink: 0; }
+
+  /* Insight box */
+  .insight-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 10px; }
+  .insight-box.clickable { cursor: pointer; transition: all 0.15s; }
+  .insight-box.clickable:hover { background: var(--bg3); border-color: var(--border2); }
+  .insight-icon { font-size: 20px; color: var(--text3); margin-bottom: 8px; }
+  .insight-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .insight-text strong { color: var(--text); font-weight: 500; }
+
+  /* Zone rows */
+  .zone-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .zone-row:last-child { border-bottom: none; }
+  .zone-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; margin-top: 3px; }
+  .zone-label { font-size: 12px; color: var(--text2); width: 130px; flex-shrink: 0; font-weight: 500; }
+  .zone-desc { font-size: 12px; color: var(--text3); flex: 1; line-height: 1.5; }
+
+  /* Loading / error */
+  .loading-msg { text-align: center; padding: 4rem 2rem; color: var(--text3); font-size: 14px; }
+  .loading-msg i { font-size: 24px; display: block; margin-bottom: 12px; }
+  .error-box { background: rgba(226,75,74,0.08); border: 0.5px solid rgba(226,75,74,0.3); border-radius: var(--radius); padding: 1rem 1.25rem; color: #E24B4A; font-size: 13px; margin-bottom: 1.5rem; line-height: 1.6; }
+
+  /* Token warning */
+  .token-warning { background: rgba(239,159,39,0.08); border: 0.5px solid rgba(239,159,39,0.25); border-radius: var(--radius); padding: 0.75rem 1rem; color: #EF9F27; font-size: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+
+  /* Workout card inner */
+  .workout-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .workout-stat { font-size: 12px; }
+  .workout-stat-label { color: var(--text3); margin-bottom: 2px; }
+  .workout-stat-val { font-weight: 500; color: var(--text); }
+
+  /* Footer */
+  .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 0.5px solid var(--border); text-align: center; font-size: 11px; color: var(--text3); }
+
+  @media (max-width: 600px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .workout-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
 </head>
 <body>
-  <h1>⚡ WHOOP Dashboard</h1>
+<div class="container">
 
-  <div class="section-title">Recovery</div>
-  <div class="grid" id="recovery-grid">
-    <div class="card"><div class="card-label">Recovery Score</div><div class="card-value loading" id="recovery-score">Loading…</div></div>
-    <div class="card"><div class="card-label">HRV</div><div class="card-value" id="hrv">—</div><div class="card-sub">ms</div></div>
-    <div class="card"><div class="card-label">Resting HR</div><div class="card-value" id="rhr">—</div><div class="card-sub">bpm</div></div>
-    <div class="card"><div class="card-label">SpO2</div><div class="card-value" id="spo2">—</div><div class="card-sub">%</div></div>
+  <div class="header">
+    <div class="header-left">
+      <div class="avatar" id="user-avatar">PS</div>
+      <div>
+        <div class="user-name" id="user-name">Prasad Sawant</div>
+        <div class="user-date" id="today-date"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill"><span class="dot"></span> Live WHOOP data</div>
+      <button class="btn" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
+    </div>
   </div>
 
-  <div class="section-title">Sleep</div>
-  <div class="grid">
-    <div class="card"><div class="card-label">Sleep Score</div><div class="card-value" id="sleep-score">—</div></div>
-    <div class="card"><div class="card-label">Total Sleep</div><div class="card-value" id="sleep-total">—</div><div class="card-sub">hours</div></div>
-    <div class="card"><div class="card-label">REM</div><div class="card-value" id="sleep-rem">—</div><div class="card-sub">hours</div></div>
-    <div class="card"><div class="card-label">Deep (SWS)</div><div class="card-value" id="sleep-sws">—</div><div class="card-sub">hours</div></div>
+  <div id="token-warning" class="token-warning" style="display:none;">
+    <i class="ti ti-alert-triangle"></i>
+    Access token expired. <a href="#" onclick="window.location.reload()" style="color:#EF9F27; margin-left:4px;">Reload page</a> — tokens are refreshed automatically on load.
+  </div>
+  <div id="error-box" class="error-box" style="display:none;"></div>
+  <div id="loading" class="loading-msg"><i class="ti ti-loader-2"></i> Fetching your WHOOP data...</div>
+
+  <div id="main" style="display:none;">
+    <div class="tab-row">
+      <div class="tab active" onclick="switchTab('today')">Today</div>
+      <div class="tab" onclick="switchTab('sleep')">Sleep</div>
+      <div class="tab" onclick="switchTab('strain')">Strain</div>
+      <div class="tab" onclick="switchTab('learn')">Metric guide</div>
+    </div>
+
+    <!-- TODAY TAB -->
+    <div id="tab-today" class="tab-panel active">
+
+      <div class="section">
+        <div class="section-label">Recovery</div>
+        <div class="grid-4">
+          <div class="metric-card" onclick="toggleExplain('recovery')">
+            <div class="metric-label"><i class="ti ti-heartbeat"></i> Recovery <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-recovery">—<span class="metric-unit">%</span></div>
+            <div class="score-bar"><div class="score-fill" id="b-recovery" style="width:0%"></div></div>
+            <div id="t-recovery" style="margin-top:6px;"></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('hrv')">
+            <div class="metric-label"><i class="ti ti-activity"></i> HRV <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-hrv">—<span class="metric-unit"> ms</span></div>
+            <div class="metric-sub" id="s-hrv"></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('rhr')">
+            <div class="metric-label"><i class="ti ti-heart"></i> Resting HR <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-rhr">—<span class="metric-unit"> bpm</span></div>
+            <div class="metric-sub" id="s-rhr"></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('spo2')">
+            <div class="metric-label"><i class="ti ti-lungs"></i> SpO₂ <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-spo2">—<span class="metric-unit">%</span></div>
+            <div class="metric-sub">Blood oxygen</div>
+          </div>
+        </div>
+        <div id="explain-recovery" class="explain-panel">
+          <div class="explain-title">Recovery score (0–100%)</div>
+          <div class="explain-body">WHOOP's core daily metric — a composite of HRV, resting heart rate, sleep performance, and respiratory rate. It tells you how ready your body is to handle physiological stress today.<br><br><strong>Green (67–100%)</strong>: Body is primed. Push hard if your training calls for it.<br><strong>Yellow (34–66%)</strong>: Moderate readiness. Stick to maintenance intensity.<br><strong>Red (0–33%)</strong>: Physiological signal to rest. Don't override it with willpower.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Trend matters more than a single day. Watch your 7-day rolling average to spot patterns of under-recovery.</div>
+        </div>
+        <div id="explain-hrv" class="explain-panel">
+          <div class="explain-title">Heart rate variability (HRV)</div>
+          <div class="explain-body">HRV measures the variation in time between your heartbeats (milliseconds). A higher HRV signals a more adaptable autonomic nervous system — meaning your body has recovered well and is ready for stress.<br><br>WHOOP calculates HRV during your deepest sleep using the rMSSD method. <strong>Your personal baseline matters far more than absolute numbers</strong> — WHOOP compares you to your own 30-day rolling average, not population norms.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> HRV drops sharply after alcohol, illness, poor sleep, and travel. It's your body's earliest stress signal — often showing up 24–48 hours before you feel it.</div>
+        </div>
+        <div id="explain-rhr" class="explain-panel">
+          <div class="explain-title">Resting heart rate (RHR)</div>
+          <div class="explain-body">Your RHR is measured during your deepest sleep phase — the most accurate window. Lower RHR generally indicates better cardiovascular fitness and recovery.<br><br>WHOOP flags deviations from your personal baseline. An elevated RHR of 5+ bpm often precedes illness or overtraining by 1–2 days — catching it before you feel the symptoms.<br><br><strong>Trained athletes:</strong> 40–60 bpm &nbsp;|&nbsp; <strong>General population:</strong> 60–100 bpm</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> RHR elevated by 5+ bpm above baseline? Scale back training intensity that day — your body is already under stress.</div>
+        </div>
+        <div id="explain-spo2" class="explain-panel">
+          <div class="explain-title">Blood oxygen saturation (SpO₂)</div>
+          <div class="explain-body">SpO₂ measures what percentage of your hemoglobin is carrying oxygen. Normal healthy range is 95–100%. WHOOP measures this during sleep, when breathing disruptions are most detectable.<br><br>Consistent drops below 94% may indicate sleep apnea, altitude effects, or respiratory issues.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Consistently below 94%? That warrants a conversation with your doctor — could be undetected sleep apnea.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Sleep last night</div>
+        <div class="grid-4">
+          <div class="metric-card" onclick="toggleExplain('sleep-perf')">
+            <div class="metric-label"><i class="ti ti-moon"></i> Sleep performance <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-sleep-perf">—<span class="metric-unit">%</span></div>
+            <div class="score-bar"><div class="score-fill" id="b-sleep" style="width:0%;background:var(--green);"></div></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('sleep-dur')">
+            <div class="metric-label"><i class="ti ti-clock"></i> Time asleep <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-sleep-dur">—</div>
+            <div class="metric-sub" id="s-sleep-need"></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('sleep-eff')">
+            <div class="metric-label"><i class="ti ti-trending-up"></i> Efficiency <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-sleep-eff">—<span class="metric-unit">%</span></div>
+            <div class="metric-sub">Time asleep vs in bed</div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('sleep-lat')">
+            <div class="metric-label"><i class="ti ti-zzz"></i> Latency <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-sleep-lat">—<span class="metric-unit"> min</span></div>
+            <div class="metric-sub">Time to fall asleep</div>
+          </div>
+        </div>
+        <div id="explain-sleep-perf" class="explain-panel">
+          <div class="explain-title">Sleep performance</div>
+          <div class="explain-body">The percentage of your personalized sleep need that you actually fulfilled. WHOOP calculates your individual sleep need daily based on your body, activity level, and accumulated debt — it's not a fixed 8 hours.<br><br><strong>85%+</strong>: Peaked — body got what it needed.<br><strong>70–85%</strong>: Green — adequate recovery.<br><strong>Below 70%</strong>: Sleep debt building. Expect lower recovery score tomorrow.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Even one night under 70% performance measurably lowers HRV the following morning.</div>
+        </div>
+        <div id="explain-sleep-dur" class="explain-panel">
+          <div class="explain-title">Time asleep vs sleep need</div>
+          <div class="explain-body">WHOOP personalizes your sleep need daily — it increases after hard training days and decreases after rest days. It accounts for accumulated debt, recent sleep quality, and physiological strain.<br><br>This is why two people can both sleep 7 hours and have very different recovery scores — their needs are different.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> If your sleep need is consistently rising week over week, you're accumulating a debt that's quietly degrading your performance.</div>
+        </div>
+        <div id="explain-sleep-eff" class="explain-panel">
+          <div class="explain-title">Sleep efficiency</div>
+          <div class="explain-body">The ratio of actual sleep time to total time in bed. Ideal range: 85–100%. Below 85% means fragmented sleep — you're in bed but not fully recovering. Common causes: awakenings, restlessness, long sleep onset, or alcohol.<br><br>Sleep efficiency is often a more actionable metric than duration — you can't always sleep longer, but you can sleep better.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Avoid screens, alcohol, and heavy meals within 2 hours of bed to meaningfully improve efficiency.</div>
+        </div>
+        <div id="explain-sleep-lat" class="explain-panel">
+          <div class="explain-title">Sleep latency</div>
+          <div class="explain-body">How long it took you to fall asleep after getting into bed. Ideal: 10–20 minutes.<br><br><strong>Under 5 min:</strong> You're overtired — your body crashed from exhaustion.<br><strong>10–20 min:</strong> Ideal. Relaxed and naturally ready to sleep.<br><strong>Over 30 min:</strong> Anxiety, caffeine sensitivity, or poor sleep hygiene.<br><br>WHOOP detects sleep onset via heart rate drop — no button to press.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Consistent latency over 20 min? Try moving bedtime 30 min earlier and cutting caffeine after 2pm.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Strain today</div>
+        <div class="grid-4">
+          <div class="metric-card" onclick="toggleExplain('strain-card')">
+            <div class="metric-label"><i class="ti ti-flame"></i> Day strain <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-strain">—</div>
+            <div class="score-bar"><div class="score-fill" id="b-strain" style="width:0%;"></div></div>
+            <div class="metric-sub" id="t-strain" style="margin-top:6px;"></div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('calories')">
+            <div class="metric-label"><i class="ti ti-bolt"></i> Calories <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-cals">—<span class="metric-unit"> kcal</span></div>
+            <div class="metric-sub">Total energy burn</div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('maxhr')">
+            <div class="metric-label"><i class="ti ti-heart-rate-monitor"></i> Max HR <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-maxhr">—<span class="metric-unit"> bpm</span></div>
+            <div class="metric-sub">Peak today</div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('avghr')">
+            <div class="metric-label"><i class="ti ti-heart"></i> Avg HR <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-avghr">—<span class="metric-unit"> bpm</span></div>
+            <div class="metric-sub">Day average</div>
+          </div>
+        </div>
+        <div id="explain-strain-card" class="explain-panel">
+          <div class="explain-title">Day strain (0–21 scale)</div>
+          <div class="explain-body">Cardiovascular load — how hard your heart worked throughout the full day. Calculated from time spent in each heart rate zone, not just workouts.<br><br><strong>0–9:</strong> Light / recovery activity<br><strong>10–13:</strong> Moderate — maintenance level<br><strong>14–17:</strong> High — pushing limits<br><strong>18–21:</strong> All out — maximum effort<br><br><strong>The key rule:</strong> match strain to your recovery score. High recovery + high strain = productive adaptation. Low recovery + high strain = overtraining and breakdown.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Strain slightly above your recovery-recommended level is the sweet spot for adaptation without burnout.</div>
+        </div>
+        <div id="explain-calories" class="explain-panel">
+          <div class="explain-title">Total calorie burn</div>
+          <div class="explain-body">Your total daily energy expenditure (TDEE) — basal metabolic rate plus all activity calories. Calculated using continuous HR data and your body measurements (weight, height, age) for higher accuracy than step-based trackers.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Underfueling after high-strain days is one of the top recovery mistakes athletes make. Eat to match your output.</div>
+        </div>
+        <div id="explain-maxhr" class="explain-panel">
+          <div class="explain-title">Max heart rate</div>
+          <div class="explain-body">The highest HR recorded in the last 24 hours. Time spent near your personal max HR is what drives strain most. WHOOP estimates your true max from measured data over time — more accurate than the 220-minus-age formula.</div>
+        </div>
+        <div id="explain-avghr" class="explain-panel">
+          <div class="explain-title">Average heart rate</div>
+          <div class="explain-body">Mean HR across the full 24-hour day. An average higher than your normal — even without deliberate exercise — is a strong signal of physiological stress from illness, travel, anxiety, or overtraining. It's one of the best passive stress indicators WHOOP tracks.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Today's coaching read</div>
+        <div class="insight-box">
+          <div class="insight-icon"><i class="ti ti-brain"></i></div>
+          <div class="insight-text" id="insight-text">Generating your insight...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLEEP TAB -->
+    <div id="tab-sleep" class="tab-panel">
+      <div class="section">
+        <div class="section-label">Sleep stages last night</div>
+        <div class="card">
+          <div class="sleep-stage">
+            <div class="zone-dot" style="background:var(--green);border-radius:50%;"></div>
+            <span class="stage-label">Deep (SWS)</span>
+            <div class="sleep-bar-wrap"><div class="score-fill" id="bar-sws" style="width:0%;background:var(--green);"></div></div>
+            <span class="stage-dur" id="dur-sws">—</span>
+          </div>
+          <div class="sleep-stage">
+            <div class="zone-dot" style="background:var(--purple);border-radius:50%;"></div>
+            <span class="stage-label">REM</span>
+            <div class="sleep-bar-wrap"><div class="score-fill" id="bar-rem" style="width:0%;background:var(--purple);"></div></div>
+            <span class="stage-dur" id="dur-rem">—</span>
+          </div>
+          <div class="sleep-stage">
+            <div class="zone-dot" style="background:var(--blue);border-radius:50%;"></div>
+            <span class="stage-label">Light sleep</span>
+            <div class="sleep-bar-wrap"><div class="score-fill" id="bar-light" style="width:0%;background:var(--blue);"></div></div>
+            <span class="stage-dur" id="dur-light">—</span>
+          </div>
+          <div class="sleep-stage" style="border:none;">
+            <div class="zone-dot" style="background:var(--red);border-radius:50%;"></div>
+            <span class="stage-label">Awake</span>
+            <div class="sleep-bar-wrap"><div class="score-fill" id="bar-awake" style="width:0%;background:var(--red);"></div></div>
+            <span class="stage-dur" id="dur-awake">—</span>
+          </div>
+        </div>
+        <div class="explain-panel open" style="margin-top:12px;">
+          <div class="explain-title">What each sleep stage does for your body</div>
+          <div class="explain-body">
+            <strong>Deep sleep (SWS) — the most important for athletes:</strong> Physical repair happens here. Human growth hormone (HGH) is released, muscles rebuild, immune function strengthens. Target: 15–20% of total sleep.<br><br>
+            <strong>REM — the cognitive stage:</strong> Memory consolidation, emotional regulation, creativity. Where learning gets locked in. Target: 20–25% of total sleep.<br><br>
+            <strong>Light sleep — transition and organization:</strong> Your brain organizes the day's information. Necessary but less impactful than SWS or REM.<br><br>
+            <strong>Awake — brief is normal:</strong> Short awakenings throughout the night are physiologically normal. Under 10% of sleep time in "awake" is healthy.
+          </div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Alcohol is the biggest destroyer of deep sleep — even 1–2 drinks can reduce SWS by 20–30%. The effect shows clearly in your WHOOP scores the next morning.</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Additional sleep signals</div>
+        <div class="grid-2">
+          <div class="metric-card" onclick="toggleExplain('resp')">
+            <div class="metric-label"><i class="ti ti-wind"></i> Respiratory rate <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-resp">—<span class="metric-unit"> rpm</span></div>
+            <div class="metric-sub">Breaths per min during sleep</div>
+          </div>
+          <div class="metric-card" onclick="toggleExplain('consistency')">
+            <div class="metric-label"><i class="ti ti-moon-stars"></i> Sleep consistency <i class="ti ti-info-circle" style="margin-left:auto;font-size:12px;color:var(--text3);"></i></div>
+            <div class="metric-value" id="v-consistency">—<span class="metric-unit">%</span></div>
+            <div class="metric-sub">Schedule regularity score</div>
+          </div>
+        </div>
+        <div id="explain-resp" class="explain-panel">
+          <div class="explain-title">Respiratory rate</div>
+          <div class="explain-body">Breaths per minute during sleep. Normal range: 12–20 rpm. A rise of 1–2 rpm above your personal baseline is WHOOP's earliest illness detection signal — it often appears 12–24 hours before you feel unwell.<br><br>WHOOP detects this through subtle patterns in continuous heart rate monitoring during sleep.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Respiratory rate spike + low HRV together = your body is likely fighting something. Consider skipping hard training that day.</div>
+        </div>
+        <div id="explain-consistency" class="explain-panel">
+          <div class="explain-title">Sleep consistency</div>
+          <div class="explain-body">How consistent your sleep and wake times are across the past week. Your circadian rhythm is regulated by consistent timing — irregular schedules reduce sleep quality even when total hours look adequate.<br><br>A high consistency score (80%+) means your body knows when to expect sleep and prepares accordingly — leading to faster sleep onset and more restorative cycles.</div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> Even on weekends, staying within 30 minutes of your usual sleep/wake time dramatically improves recovery quality.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STRAIN TAB -->
+    <div id="tab-strain" class="tab-panel">
+      <div class="section">
+        <div class="section-label">Latest workout</div>
+        <div class="card" id="workout-card">
+          <div style="font-size:13px;color:var(--text3);">No workout recorded yet today — strain is accumulating passively through daily activity.</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Heart rate zones — what they mean for your training</div>
+        <div class="card">
+          <div class="zone-row"><div class="zone-dot" style="background:#85B7EB;"></div><span class="zone-label">Zone 1 — Light</span><span class="zone-desc">50–60% max HR. Warm-up, cool-down, active recovery. Minimal cardiovascular strain. Good for recovery days.</span></div>
+          <div class="zone-row"><div class="zone-dot" style="background:var(--green);"></div><span class="zone-label">Zone 2 — Moderate</span><span class="zone-desc">60–70% max HR. Aerobic base building, fat oxidation, long-term endurance foundation. The most underrated training zone.</span></div>
+          <div class="zone-row"><div class="zone-dot" style="background:var(--yellow);"></div><span class="zone-label">Zone 3 — Hard</span><span class="zone-desc">70–80% max HR. Lactate threshold training. Pushes your aerobic ceiling. Heavy contribution to strain score.</span></div>
+          <div class="zone-row"><div class="zone-dot" style="background:var(--red);"></div><span class="zone-label">Zone 4 — Very hard</span><span class="zone-desc">80–90% max HR. High intensity intervals. Very high strain contribution. Requires adequate recovery between sessions.</span></div>
+          <div class="zone-row" style="border:none;"><div class="zone-dot" style="background:#A32D2D;"></div><span class="zone-label">Zone 5 — Max</span><span class="zone-desc">90%+ max HR. Sprint or all-out effort. Drives highest strain. Full recovery needed — don't visit this zone on yellow or red recovery days.</span></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Strain vs recovery — the fundamental rule</div>
+        <div class="explain-panel open">
+          <div class="explain-title">How to match your training to your body's signals</div>
+          <div class="explain-body">
+            <strong>Green recovery (67–100%) + high strain (14–21):</strong> Productive. Your body is ready to adapt to the stress you're applying. This is where gains happen.<br><br>
+            <strong>Yellow recovery (34–66%) + moderate strain (10–13):</strong> Sustainable. Maintain fitness without pushing into overtraining territory.<br><br>
+            <strong>Red recovery (0–33%) + high strain:</strong> Overtraining. You're applying stress to a body that hasn't recovered — this leads to accumulated fatigue, injury risk, and performance decline.<br><br>
+            <strong>Red recovery + low strain:</strong> Correct response. Use this as an active recovery day — walk, stretch, breathe. Let your body rebuild.
+          </div>
+          <div class="explain-tip"><i class="ti ti-bulb"></i> The athletes who improve fastest aren't the ones who train hardest every day — they're the ones who time their hardest days to their highest recovery.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEARN TAB -->
+    <div id="tab-learn" class="tab-panel">
+      <div class="section-label" style="margin-bottom:14px;">Deep dives — click any topic to explore</div>
+
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/heart-rate-variability-hrv/')">
+        <div class="insight-icon"><i class="ti ti-activity"></i></div>
+        <div class="insight-text"><strong>HRV — the master metric</strong><br>What heart rate variability really measures, why it's the most important number on your dashboard, and how to systematically improve it over weeks. ↗</div>
+      </div>
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/sleep-stages-and-recovery/')">
+        <div class="insight-icon"><i class="ti ti-moon"></i></div>
+        <div class="insight-text"><strong>Sleep stage optimization</strong><br>The science of SWS and REM — what happens in your body during each stage, what destroys them, and practical habits to maximize both. ↗</div>
+      </div>
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/strain-coach-optimal-training-load/')">
+        <div class="insight-icon"><i class="ti ti-flame"></i></div>
+        <div class="insight-text"><strong>Strain planning for performance</strong><br>How to use your strain score to structure a training week that produces adaptation without accumulating fatigue. ↗</div>
+      </div>
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/alcohol-and-sleep/')">
+        <div class="insight-icon"><i class="ti ti-bottle"></i></div>
+        <div class="insight-text"><strong>Alcohol's exact impact on recovery</strong><br>What the data shows about how alcohol affects HRV, deep sleep, and next-day recovery scores — and how many drinks it takes to see a measurable hit. ↗</div>
+      </div>
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/respiratory-rate-illness/')">
+        <div class="insight-icon"><i class="ti ti-virus"></i></div>
+        <div class="insight-text"><strong>Early illness detection</strong><br>How WHOOP catches respiratory rate and HRV changes 1–2 days before you feel sick — and the warning patterns to watch for. ↗</div>
+      </div>
+      <div class="insight-box clickable" onclick="openLink('https://www.whoop.com/the-locker/sleep-debt/')">
+        <div class="insight-icon"><i class="ti ti-trending-down"></i></div>
+        <div class="insight-text"><strong>Sleep debt — the silent performance killer</strong><br>How sleep debt compounds across the week, what it costs you in performance and recovery, and the fastest ways to pay it back. ↗</div>
+      </div>
+    </div>
   </div>
 
-  <div class="section-title">Strain</div>
-  <div class="grid">
-    <div class="card"><div class="card-label">Day Strain</div><div class="card-value" id="strain">—</div><div class="card-sub">/ 21</div></div>
-    <div class="card"><div class="card-label">Avg HR</div><div class="card-value" id="avg-hr">—</div><div class="card-sub">bpm</div></div>
-    <div class="card"><div class="card-label">Max HR</div><div class="card-value" id="max-hr">—</div><div class="card-sub">bpm</div></div>
-    <div class="card"><div class="card-label">Calories</div><div class="card-value" id="calories">—</div><div class="card-sub">kcal</div></div>
+  <div class="footer">
+    WHOOP Dashboard · Built for Prasad Sawant · Data refreshes on page load · <a href="https://developer.whoop.com" target="_blank" style="color:var(--text3);">WHOOP Developer Platform</a>
   </div>
+</div>
 
-  <script>
-    const api = path => fetch('/api' + path).then(r => r.json());
+<script>
+const ACCESS_TOKEN = 'fJa-5KJUy6F-haay0ioqggKnJwa6Mo8dQNqoTW9_LRw.jHB3-roBxN7ZuSQ5zYOrzmWzv2RAz0lX_0q4eCDff8A';
+const REFRESH_TOKEN = '_cGnQqTm6b8Wy0b2vmTFnkRU8c-de60qtZufEId_uE4.mSTM1CT9SMIXk18qQuQgIOa7TrVPKRcTgYbtrRIQ5p0';
+const CLIENT_ID = '9db5a682-278a-41d1-8574-412313fe765a';
+const CLIENT_SECRET = '1c27be069656a77b73b10a1327a2859d2dcac08db18f82e6b55935bed9e2a16f';
+const BASE = '/api';
+let token = ACCESS_TOKEN;
 
-    function scoreColor(score) {
-      if (score >= 67) return 'green';
-      if (score >= 34) return 'yellow';
-      return 'red';
-    }
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-    function msToHours(ms) {
-      return (ms / 3600000).toFixed(1);
-    }
+function minsToHM(m) { m = Math.round(m); return `${Math.floor(m/60)}h ${m%60}m`; }
 
-    async function load() {
-      try {
-        // Recovery
-        const rec = await api('/recovery?limit=1');
-        const r = rec.records?.[0];
-        if (r) {
-          const score = Math.round(r.score?.recovery_score ?? 0);
-          const el = document.getElementById('recovery-score');
-          el.textContent = score + '%';
-          el.className = 'card-value ' + scoreColor(score);
-          document.getElementById('hrv').textContent = r.score?.hrv_rmssd_milli?.toFixed(1) ?? '—';
-          document.getElementById('rhr').textContent = Math.round(r.score?.resting_heart_rate ?? 0) || '—';
-          document.getElementById('spo2').textContent = r.score?.spo2_percentage?.toFixed(1) ?? '—';
-        }
+async function tryRefresh() {
+  try {
+    const p = new URLSearchParams({ grant_type:'refresh_token', refresh_token:REFRESH_TOKEN, client_id:CLIENT_ID, client_secret:CLIENT_SECRET });
+    const r = await fetch('https://api.prod.whoop.com/oauth/oauth2/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString() });
+    const d = await r.json();
+    if (d.access_token) { token = d.access_token; return true; }
+  } catch(e) {}
+  return false;
+}
 
-        // Sleep
-        const slp = await api('/sleep?limit=1');
-        const s = slp.records?.[0];
-        if (s) {
-          const ss = Math.round(s.score?.sleep_performance_percentage ?? 0);
-          const el = document.getElementById('sleep-score');
-          el.textContent = ss + '%';
-          el.className = 'card-value ' + scoreColor(ss);
-          document.getElementById('sleep-total').textContent = msToHours(s.score?.stage_summary?.total_in_bed_time_milli ?? 0);
-          document.getElementById('sleep-rem').textContent = msToHours(s.score?.stage_summary?.total_rem_sleep_time_milli ?? 0);
-          document.getElementById('sleep-sws').textContent = msToHours(s.score?.stage_summary?.total_slow_wave_sleep_time_milli ?? 0);
-        }
+async function whoopGet(path) {
+  let r = await fetch(`${BASE}${path}`, { headers:{ Authorization:`Bearer ${token}` } });
+  if (r.status === 401) { const ok = await tryRefresh(); if (ok) r = await fetch(`${BASE}${path}`, { headers:{ Authorization:`Bearer ${token}` } }); }
+  if (!r.ok) throw new Error(`WHOOP API error ${r.status}`);
+  return r.json();
+}
 
-        // Cycle (strain)
-        const cyc = await api('/cycle?limit=1');
-        const c = cyc.records?.[0];
-        if (c) {
-          document.getElementById('strain').textContent = c.score?.strain?.toFixed(1) ?? '—';
-          document.getElementById('avg-hr').textContent = Math.round(c.score?.average_heart_rate ?? 0) || '—';
-          document.getElementById('max-hr').textContent = Math.round(c.score?.max_heart_rate ?? 0) || '—';
-          document.getElementById('calories').textContent = Math.round(c.score?.kilojoule / 4.184 ?? 0) || '—';
-        }
-      } catch (e) {
-        document.getElementById('recovery-score').textContent = 'Error';
-        document.getElementById('recovery-score').className = 'card-value error';
-        console.error(e);
-      }
-    }
+async function loadAll() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  try {
+    const [cycles, sleeps, workouts] = await Promise.all([
+      whoopGet('/cycle?limit=1'),
+      whoopGet('/activity/sleep?limit=1'),
+      whoopGet('/activity/workout?limit=1')
+    ]);
+    if (cycles.records?.length) renderCycle(cycles.records[0]);
+    if (sleeps.records?.length) renderSleep(sleeps.records[0]);
+    renderWorkout(workouts.records?.[0]);
+    generateInsight(cycles.records?.[0], sleeps.records?.[0]);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    const eb = document.getElementById('error-box');
+    eb.innerHTML = `<strong>Could not load WHOOP data.</strong> ${e.message}<br><br>Your access token may have expired. Re-run the token exchange in Cowork and update the token in the HTML file.`;
+    eb.style.display = 'block';
+  }
+}
 
-    load();
-  </script>
+function renderCycle(c) {
+  const s = c.score || {};
+  const rec = Math.round(s.recovery_score || 0);
+  document.getElementById('v-recovery').innerHTML = `${rec}<span class="metric-unit">%</span>`;
+  const rb = document.getElementById('b-recovery');
+  rb.style.width = rec + '%';
+  rb.style.background = rec >= 67 ? 'var(--green)' : rec >= 34 ? 'var(--yellow)' : 'var(--red)';
+  const tr = document.getElementById('t-recovery');
+  if (rec >= 67) tr.innerHTML = '<span class="tag tag-green">Green — ready to push</span>';
+  else if (rec >= 34) tr.innerHTML = '<span class="tag tag-yellow">Yellow — stay moderate</span>';
+  else tr.innerHTML = '<span class="tag tag-red">Red — rest today</span>';
+
+  const hrv = Math.round(s.hrv_rmssd_milli || 0);
+  document.getElementById('v-hrv').innerHTML = `${hrv}<span class="metric-unit"> ms</span>`;
+  document.getElementById('s-hrv').textContent = hrv >= 60 ? 'Above average' : hrv >= 30 ? 'Normal range' : hrv > 0 ? 'Below average' : '';
+
+  const rhr = Math.round(s.resting_heart_rate || 0);
+  document.getElementById('v-rhr').innerHTML = `${rhr}<span class="metric-unit"> bpm</span>`;
+  document.getElementById('s-rhr').textContent = rhr > 0 ? (rhr < 60 ? 'Athlete range' : rhr < 80 ? 'Normal' : 'Elevated') : '';
+
+  const spo2 = s.spo2_percentage;
+  document.getElementById('v-spo2').innerHTML = spo2 ? `${spo2.toFixed(1)}<span class="metric-unit">%</span>` : '—<span class="metric-unit">%</span>';
+
+  const strain = parseFloat(s.strain || 0);
+  document.getElementById('v-strain').textContent = strain.toFixed(1);
+  const sb = document.getElementById('b-strain');
+  sb.style.width = Math.min(100,(strain/21)*100)+'%';
+  sb.style.background = strain >= 18 ? 'var(--red)' : strain >= 14 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('t-strain').textContent = strain < 10 ? 'Light / recovery' : strain < 14 ? 'Moderate' : strain < 18 ? 'High' : 'All out';
+
+  const cals = Math.round((s.kilojoule||0)/4.184);
+  document.getElementById('v-cals').innerHTML = cals ? `${cals.toLocaleString()}<span class="metric-unit"> kcal</span>` : '—<span class="metric-unit"> kcal</span>';
+  const maxHR = Math.round(s.max_heart_rate||0);
+  document.getElementById('v-maxhr').innerHTML = maxHR ? `${maxHR}<span class="metric-unit"> bpm</span>` : '—<span class="metric-unit"> bpm</span>';
+  const avgHR = Math.round(s.average_heart_rate||0);
+  document.getElementById('v-avghr').innerHTML = avgHR ? `${avgHR}<span class="metric-unit"> bpm</span>` : '—<span class="metric-unit"> bpm</span>';
+}
+
+function renderSleep(sl) {
+  const s = sl.score || {};
+  const perf = Math.round(s.sleep_performance_percentage||0);
+  document.getElementById('v-sleep-perf').innerHTML = `${perf}<span class="metric-unit">%</span>`;
+  document.getElementById('b-sleep').style.width = perf+'%';
+
+  const st = s.stage_summary || {};
+  const swsM = Math.round((st.total_slow_wave_sleep_time_milli||0)/60000);
+  const remM = Math.round((st.total_rem_sleep_time_milli||0)/60000);
+  const lightM = Math.round((st.total_light_sleep_time_milli||0)/60000);
+  const awakeM = Math.round((st.total_awake_time_milli||0)/60000);
+  const total = (swsM+remM+lightM+awakeM)||1;
+  const sleepM = swsM+remM+lightM;
+
+  document.getElementById('v-sleep-dur').textContent = minsToHM(sleepM);
+  document.getElementById('dur-sws').textContent = minsToHM(swsM);
+  document.getElementById('dur-rem').textContent = minsToHM(remM);
+  document.getElementById('dur-light').textContent = minsToHM(lightM);
+  document.getElementById('dur-awake').textContent = minsToHM(awakeM);
+  document.getElementById('bar-sws').style.width = Math.round(swsM/total*100)+'%';
+  document.getElementById('bar-rem').style.width = Math.round(remM/total*100)+'%';
+  document.getElementById('bar-light').style.width = Math.round(lightM/total*100)+'%';
+  document.getElementById('bar-awake').style.width = Math.round(awakeM/total*100)+'%';
+
+  const needed = Math.round((sl.need?.baseline_milli||0)/60000);
+  if (needed > 0) document.getElementById('s-sleep-need').textContent = `Need: ${minsToHM(needed)}`;
+
+  document.getElementById('v-sleep-eff').innerHTML = `${Math.round(s.sleep_efficiency_percentage||0)}<span class="metric-unit">%</span>`;
+  document.getElementById('v-sleep-lat').innerHTML = `${Math.round((s.sleep_latency_milli||0)/60000)}<span class="metric-unit"> min</span>`;
+
+  const resp = s.respiratory_rate;
+  document.getElementById('v-resp').innerHTML = resp ? `${resp.toFixed(1)}<span class="metric-unit"> rpm</span>` : '—<span class="metric-unit"> rpm</span>';
+  const cons = s.sleep_consistency_percentage;
+  document.getElementById('v-consistency').innerHTML = cons ? `${Math.round(cons)}<span class="metric-unit">%</span>` : '—<span class="metric-unit">%</span>';
+}
+
+function renderWorkout(w) {
+  const card = document.getElementById('workout-card');
+  if (!w?.score) { card.innerHTML = '<div style="font-size:13px;color:var(--text3);">No workout recorded yet today — strain is accumulating passively through daily activity.</div>'; return; }
+  const s = w.score;
+  const z = s.zone_duration||{};
+  const hiM = Math.round(((z.zone_three_milli||0)+(z.zone_four_milli||0)+(z.zone_five_milli||0))/60000);
+  const dur = Math.round((new Date(w.end)-new Date(w.start))/60000);
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+      <div>
+        <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px;">Workout</div>
+        <div style="font-size:12px;color:var(--text3);">${new Date(w.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} – ${new Date(w.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} &nbsp;·&nbsp; ${minsToHM(dur)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:26px;font-weight:500;color:var(--text);">${parseFloat(s.strain||0).toFixed(1)}</div>
+        <div style="font-size:11px;color:var(--text3);">strain</div>
+      </div>
+    </div>
+    <div class="workout-grid">
+      <div class="workout-stat"><div class="workout-stat-label">Avg HR</div><div class="workout-stat-val">${Math.round(s.average_heart_rate||0)} bpm</div></div>
+      <div class="workout-stat"><div class="workout-stat-label">Max HR</div><div class="workout-stat-val">${Math.round(s.max_heart_rate||0)} bpm</div></div>
+      <div class="workout-stat"><div class="workout-stat-label">Zone 3–5 time</div><div class="workout-stat-val">${minsToHM(hiM)}</div></div>
+    </div>`;
+}
+
+function generateInsight(cycle, sleep) {
+  const rec = Math.round(cycle?.score?.recovery_score||0);
+  const perf = Math.round(sleep?.score?.sleep_performance_percentage||0);
+  const strain = parseFloat(cycle?.score?.strain||0);
+  const hrv = Math.round(cycle?.score?.hrv_rmssd_milli||0);
+  const rhr = Math.round(cycle?.score?.resting_heart_rate||0);
+  let txt = '';
+  if (rec >= 67) {
+    txt = `Recovery is <strong>green at ${rec}%</strong> — your body is physiologically ready today. `;
+    if (strain < 10) txt += `Strain is still light (${strain.toFixed(1)}/21), meaning you have capacity to train hard. If your program calls for intensity, today is the day to deliver it.`;
+    else if (strain > 15) txt += `You've already accumulated significant strain today (${strain.toFixed(1)}/21). Be mindful before adding more load — you're getting close to the high zone.`;
+    else txt += `Moderate strain is building (${strain.toFixed(1)}/21). A solid training session is well-supported right now.`;
+  } else if (rec >= 34) {
+    txt = `Recovery is <strong>yellow at ${rec}%</strong> — your body has partially recovered but isn't at full readiness. `;
+    if (perf < 75) txt += `Sleep performance was ${perf}% last night, below the 75% threshold — you didn't fully pay back your recovery debt overnight. Keep today's training at maintenance intensity and make sleep the priority tonight.`;
+    else txt += `Focus on technique, aerobic work, or skill-based training today. This isn't the session to chase a new personal best.`;
+    if (hrv > 0) txt += ` HRV of ${hrv}ms provides additional context — ${hrv < 40 ? 'lower than typical, reinforcing a lighter day' : 'within a reasonable range for yellow recovery'}.`;
+  } else {
+    txt = `Recovery is <strong>red at ${rec}%</strong>. `;
+    txt += `This is a direct physiological signal — your body hasn't recovered from previous stress. Overriding this with hard training today compounds fatigue rather than building fitness. `;
+    txt += `Light movement (walk, yoga, stretch) is appropriate. Focus your energy on sleep quality tonight, nutrition, and hydration. `;
+    if (rhr > 0) txt += `Your resting HR of ${rhr} bpm gives additional context on where your body currently stands.`;
+  }
+  document.getElementById('insight-text').innerHTML = txt;
+}
+
+function toggleExplain(id) {
+  const el = document.getElementById('explain-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function switchTab(name) {
+  const names = ['today','sleep','strain','learn'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function openLink(url) { window.open(url, '_blank'); }
+
+loadAll();
+</script>
 </body>
 </html>
